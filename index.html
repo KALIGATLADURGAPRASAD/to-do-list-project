@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .completed { text-decoration: line-through; color: gray; }
+    .task-item { display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h2 class="text-center mb-4"> To-Do List</h2>
+    <div class="input-group mb-3">
+      <input type="text" id="taskInput" class="form-control" placeholder="Enter a new task">
+      <div class="input-group-append">
+        <button class="btn btn-primary" id="addTaskBtn">Add Task</button>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <button class="btn btn-outline-secondary filter-btn" data-filter="all">All</button>
+      <button class="btn btn-outline-secondary filter-btn" data-filter="pending">Pending</button>
+      <button class="btn btn-outline-secondary filter-btn" data-filter="completed">Completed</button>
+    </div>
+
+    <ul class="list-group" id="taskList"></ul>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+      function saveTasks() {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+      }
+
+      function renderTasks(filter = "all") {
+        $('#taskList').empty();
+        tasks.forEach((task, index) => {
+          if (filter === "completed" && !task.completed) return;
+          if (filter === "pending" && task.completed) return;
+
+          const taskItem = $(`
+            <li class="list-group-item task-item">
+              <span class="${task.completed ? 'completed' : ''}">${task.text}</span>
+              <div>
+                <button class="btn btn-sm btn-success complete-btn mr-1">${task.completed ? 'Undo' : 'Done'}</button>
+                <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+              </div>
+            </li>
+          `);
+
+          taskItem.find('.complete-btn').click(() => {
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks();
+            renderTasks(filter);
+          });
+
+          taskItem.find('.delete-btn').click(() => {
+            tasks.splice(index, 1);
+            saveTasks();
+            renderTasks(filter);
+          });
+
+          $('#taskList').append(taskItem);
+        });
+      }
+
+      $('#addTaskBtn').click(() => {
+        const taskText = $('#taskInput').val().trim();
+        if (taskText) {
+          tasks.push({ text: taskText, completed: false });
+          saveTasks();
+          $('#taskInput').val('');
+          renderTasks();
+        }
+      });
+
+      $('.filter-btn').click(function () {
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        renderTasks($(this).data('filter'));
+      });
+
+      renderTasks();
+    });
+  </script>
+</body>
+</html>
